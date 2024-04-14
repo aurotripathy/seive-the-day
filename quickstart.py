@@ -5,7 +5,8 @@
   see this
   https://stackoverflow.com/questions/73822462/how-to-return-all-events-on-a-specific-date-in-google-calendar-api
 """
-import datetime
+import datetime 
+from datetime import datetime
 import os.path
 
 from google.auth.transport.requests import Request
@@ -16,6 +17,22 @@ from googleapiclient.errors import HttpError
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
+
+import pytz
+
+def get_events_by_date(api_service, event_date):
+
+    split_date = event_date.split('-')
+
+    event_date = datetime(int(split_date[0]), int(split_date[1]), int(split_date[2]), 6, 00, 00, 0)
+    event_date = pytz.UTC.localize(event_date).isoformat()
+
+    end = datetime(int(split_date[0]), int(split_date[1]), int(split_date[2]), 23, 59, 59, 999999)
+    end = pytz.UTC.localize(end).isoformat()
+
+    # events_result = api_service.events().list(calendarId='primary', timeMin=event_date,timeMax=end).execute()
+    events_result = api_service.events().list(calendarId='primary', timeMin=event_date,timeMax=end, timeZone="UTC").execute()
+    return events_result.get('items', [])
 
 
 def main():
@@ -43,9 +60,13 @@ def main():
 
   try:
     service = build("calendar", "v3", credentials=creds)
-
+    all_events = get_events_by_date(service, "2024-4-12")
+    
+    for event in all_events:
+        print(event['summary'])
+    
     # Call the Calendar API
-    now = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
+    now = datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
     # now = datetime.datetime(year=24, month=4, day=12, hour=6, minute=0, second=0).isoformat() + "Z"
     # time_min = datetime.datetime(year=24, month=4, day=12, hour=6, minute=0, second=0).isoformat() + "Z"
     # time_max = datetime.datetime(year=24, month=4, day=12, hour=20, minute=0, second=0).isoformat() + "Z"
@@ -61,7 +82,7 @@ def main():
             singleEvents=True,
             maxResults=10,
             orderBy="startTime",
-            timeZone="UTC",
+            timeZone="America/Los_Angeles",
         )
         .execute()
     )
@@ -82,31 +103,31 @@ def main():
   except HttpError as error:
     print(f"An error occurred: {error}")
 
-  # new one
-  try:
-      service = build("calendar", "v3", credentials=creds)
-      event= {
-        'start': {
-          'dateTime': '2024-05-28T09:00:00-07:00',
-          'timeZone': 'America/Los_Angeles',
-        },
-        'end': {
-          'dateTime': '2024-05-28T17:00:00-07:00',
-          'timeZone': 'America/Los_Angeles',
-        },
-      }
+  # # new one
+  # try:
+  #     service = build("calendar", "v3", credentials=creds)
+  #     event= {
+  #       'start': {
+  #         'dateTime': '2024-05-28T09:00:00-07:00',
+  #         'timeZone': 'America/Los_Angeles',
+  #       },
+  #       'end': {
+  #         'dateTime': '2024-05-28T17:00:00-07:00',
+  #         'timeZone': 'America/Los_Angeles',
+  #       },
+  #     }
 
-      event_results = (
-        service.events()
-        .list(
-          calendarId='primary', 
-          body=event)
-        .execute()
-      )
-      events = event_results.get("items", [])
+  #     event_results = (
+  #       service.events()
+  #       .list(
+  #         calendarId='primary', 
+  #         body=event)
+  #       .execute()
+  #     )
+  #     events = event_results.get("items", [])
     
-  except HttpError as error:
-      print(f"An error occurred: {error}")
+  # except HttpError as error:
+  #     print(f"An error occurred: {error}")
     
 if __name__ == "__main__":
   main()
