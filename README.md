@@ -1,1 +1,1 @@
-# seive-the-day
+# seize-the-day
