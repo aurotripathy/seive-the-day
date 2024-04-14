@@ -1,8 +1,8 @@
 """
   taken from 
   https://developers.google.com/calendar/api/quickstart/python
-  and modified
-  see this
+  https://developers.google.com/calendar/api/v3/reference/events/list
+  see this too
   https://stackoverflow.com/questions/73822462/how-to-return-all-events-on-a-specific-date-in-google-calendar-api
 """
 import datetime 
