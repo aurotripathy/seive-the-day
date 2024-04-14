@@ -14,30 +14,35 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import pytz
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
 
-import pytz
 
 def get_events_by_date(api_service, event_date):
-
+    """ Does return some spurious events beyond the ask, need to understand this better"""
     split_date = event_date.split('-')
 
-    event_date = datetime(int(split_date[0]), int(split_date[1]), int(split_date[2]), 6, 00, 00, 0)
+    event_date = datetime(int(split_date[0]), int(split_date[1]), int(split_date[2]), 0, 00, 00, 0)
+    
     event_date = pytz.UTC.localize(event_date).isoformat()
 
     end = datetime(int(split_date[0]), int(split_date[1]), int(split_date[2]), 23, 59, 59, 999999)
     end = pytz.UTC.localize(end).isoformat()
-
-    # events_result = api_service.events().list(calendarId='primary', timeMin=event_date,timeMax=end).execute()
-    events_result = api_service.events().list(calendarId='primary', timeMin=event_date,timeMax=end, timeZone="UTC").execute()
+    
+    events_result = api_service.events().list(calendarId='primary', 
+                                              timeMin=event_date, 
+                                              timeMax=end,
+                                              singleEvents=True,
+                                              orderBy="startTime",
+                                              timeZone="America/Los_Angeles").execute()
     return events_result.get('items', [])
-
+    
 
 def main():
-  """Shows basic usage of the Google Calendar API.
-  Prints the start and name of the next 10 events on the user's calendar.
+  """ Uses the Google Calendar API
+      Send to ChatGPT to write a nice exec summary
   """
   creds = None
   # The file token.json stores the user's access and refresh tokens, and is
@@ -63,71 +68,19 @@ def main():
     all_events = get_events_by_date(service, "2024-4-12")
     
     for event in all_events:
-        print(event['summary'])
-    
-    # Call the Calendar API
-    now = datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
-    # now = datetime.datetime(year=24, month=4, day=12, hour=6, minute=0, second=0).isoformat() + "Z"
-    # time_min = datetime.datetime(year=24, month=4, day=12, hour=6, minute=0, second=0).isoformat() + "Z"
-    # time_max = datetime.datetime(year=24, month=4, day=12, hour=20, minute=0, second=0).isoformat() + "Z"
-    # print(f'time min: {time_min} type: {type(time_min)}')
-    # print(f'time max: {time_max}')
-    
-    print("Getting the upcoming 10 events")
-    events_result = (
-        service.events()
-        .list(
-            calendarId="primary",
-            timeMin=now,
-            singleEvents=True,
-            maxResults=10,
-            orderBy="startTime",
-            timeZone="America/Los_Angeles",
-        )
-        .execute()
-    )
-    events = events_result.get("items", [])
-
-    if not events:
-      print("No upcoming events found.")
-      return
-
-    # Prints the start and name of the next 10 events
-    for event in events:
+      # print(event["kind"])
       start = event["start"].get("dateTime", event["start"].get("date"))
       end = event["end"].get("dateTime", event["end"].get("date"))
-      print(start, end, event["summary"])
-
+      print(f'start: {start}, end: {end}, Summary: {event["summary"]}')
+      
+      if "description" in event:
+        print(event["description"])
+      
     
 
   except HttpError as error:
     print(f"An error occurred: {error}")
 
-  # # new one
-  # try:
-  #     service = build("calendar", "v3", credentials=creds)
-  #     event= {
-  #       'start': {
-  #         'dateTime': '2024-05-28T09:00:00-07:00',
-  #         'timeZone': 'America/Los_Angeles',
-  #       },
-  #       'end': {
-  #         'dateTime': '2024-05-28T17:00:00-07:00',
-  #         'timeZone': 'America/Los_Angeles',
-  #       },
-  #     }
-
-  #     event_results = (
-  #       service.events()
-  #       .list(
-  #         calendarId='primary', 
-  #         body=event)
-  #       .execute()
-  #     )
-  #     events = event_results.get("items", [])
-    
-  # except HttpError as error:
-  #     print(f"An error occurred: {error}")
     
 if __name__ == "__main__":
   main()
