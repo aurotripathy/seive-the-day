@@ -24,9 +24,9 @@ def get_events_by_date(api_service, event_date):
     """ Does return some spurious events beyond the ask, need to understand this better"""
     split_date = event_date.split('-')
 
-    event_date = datetime(int(split_date[0]), int(split_date[1]), int(split_date[2]), 0, 00, 00, 0)
+    event_date_dt = datetime(int(split_date[0]), int(split_date[1]), int(split_date[2]), 0, 00, 00, 0)
     
-    event_date = pytz.UTC.localize(event_date).isoformat()
+    event_date = pytz.UTC.localize(event_date_dt).isoformat()
 
     end = datetime(int(split_date[0]), int(split_date[1]), int(split_date[2]), 23, 59, 59, 999999)
     end = pytz.UTC.localize(end).isoformat()
@@ -37,8 +37,10 @@ def get_events_by_date(api_service, event_date):
                                               singleEvents=True,
                                               orderBy="startTime",
                                               timeZone="America/Los_Angeles").execute()
-    return events_result.get('items', [])
+    return event_date, events_result.get('items', [])
     
+def strip_time_from_date(date_str):
+  return date_str.split('T')[0]
 
 def main():
   """ Uses the Google Calendar API
@@ -65,16 +67,28 @@ def main():
 
   try:
     service = build("calendar", "v3", credentials=creds)
-    all_events = get_events_by_date(service, "2024-4-12")
+    event_date_str, all_events = get_events_by_date(service, "2024-4-12")
+    event_date_str = strip_time_from_date(event_date_str)
+    print(f'event date string" {event_date_str}')
     
     for event in all_events:
-      # print(event["kind"])
-      start = event["start"].get("dateTime", event["start"].get("date"))
-      end = event["end"].get("dateTime", event["end"].get("date"))
-      print(f'start: {start}, end: {end}, Summary: {event["summary"]}')
       
-      if "description" in event:
-        print(event["description"])
+      start = event["start"].get("dateTime", event["start"].get("date"))
+      if "date" in event["start"]:
+        date_str = event["start"]["date"]
+      elif "dateTime" in event["start"]:
+        date_str = event["start"]["dateTime"]
+      time_striped_date = strip_time_from_date(date_str)
+      
+      print(f'++ extracted date str: {time_striped_date}')
+      
+      end = event["end"].get("dateTime", event["end"].get("date"))
+      
+      if event_date_str == time_striped_date:
+        print(f'start: {start}, end: {end}, Summary: {event["summary"]}')
+      
+        if "description" in event:
+          print(event["description"])
       
     
 
