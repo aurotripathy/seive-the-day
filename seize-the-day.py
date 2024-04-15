@@ -70,6 +70,7 @@ def main():
     event_date_str, all_events = get_events_by_date(service, "2024-4-12")
     event_date_str = strip_time_from_date(event_date_str)
     
+    print(f'LotD for {event_date_str}')
     for event in all_events:
       
       start = event["start"].get("dateTime", event["start"].get("date"))
