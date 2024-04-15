@@ -83,7 +83,7 @@ def main():
       
       end = event["end"].get("dateTime", event["end"].get("date"))
       
-      if event_date_str == time_striped_date:
+      if (event_date_str == time_striped_date) and not((event["summary"] == "Home") or (event["summary"]=="schedule my day")):
         print(f'start: {start}, end: {end}, Summary: {event["summary"]}')
       
         if "description" in event:
