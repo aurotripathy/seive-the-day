@@ -69,7 +69,6 @@ def main():
     service = build("calendar", "v3", credentials=creds)
     event_date_str, all_events = get_events_by_date(service, "2024-4-12")
     event_date_str = strip_time_from_date(event_date_str)
-    print(f'event date string" {event_date_str}')
     
     for event in all_events:
       
@@ -80,7 +79,7 @@ def main():
         date_str = event["start"]["dateTime"]
       time_striped_date = strip_time_from_date(date_str)
       
-      print(f'++ extracted date str: {time_striped_date}')
+      # print(f'++ extracted date str: {time_striped_date}')
       
       end = event["end"].get("dateTime", event["end"].get("date"))
       
