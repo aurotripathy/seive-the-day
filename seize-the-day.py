@@ -15,9 +15,23 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import pytz
+import argparse
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
+
+def valid_date(s):
+    try:
+        return datetime.strptime(s, "%Y-%m-%d")
+    except ValueError:
+        msg = "Not a valid date: '{0}'. Expected format YYYY-MM-DD.".format(s)
+        raise argparse.ArgumentTypeError(msg)
+
+def get_args():
+    parser = argparse.ArgumentParser(description="Process a date.")
+    parser.add_argument("date", help="The date in YYYY-MM-DD format", type=valid_date)
+    args = parser.parse_args()
+    return args
 
 
 def get_events_by_date(api_service, event_date):
@@ -46,6 +60,13 @@ def main():
   """ Uses the Google Calendar API
       Send to ChatGPT to write a nice exec summary
   """
+  
+  args = get_args()
+  date = args.date
+  print(f'type of date: {type(args.date)}')
+  print("Validated date:", date.strftime("%Y-%m-%d"))
+  date_str = date.strftime("%Y-%m-%d")
+    
   creds = None
   # The file token.json stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first
@@ -67,7 +88,7 @@ def main():
 
   try:
     service = build("calendar", "v3", credentials=creds)
-    event_date_str, all_events = get_events_by_date(service, "2024-4-12")
+    event_date_str, all_events = get_events_by_date(service, date_str)
     event_date_str = strip_time_from_date(event_date_str)
     
     print(f'LotD for {event_date_str}')
